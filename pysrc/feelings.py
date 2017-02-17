@@ -1,5 +1,7 @@
+from __future__ import print_function
 import json
 import re
+import random
 
 def add(d, k1, k2):
     if k1 not in d:
@@ -33,7 +35,7 @@ def main():
             total += count
         for next_word, count in transitions.iteritems():
             prob[word][next_word] = count / total
- 
+
     for k1 in counts:
         output[k1] = {}
         for k2 in counts[k1]:
@@ -42,6 +44,21 @@ def main():
     with open('output.json', 'w') as outputf:
         json.dump(output, outputf, \
             sort_keys=True, indent=2, separators=(',', ': '))
+
+    cur_word = raw_input()
+    print()
+    while True:
+        cur_word = pick_next_word(cur_word)
+        print(cur_word, end=' ')
+        if cur_word == '\n':
+            raw_input()
+
+def pick_next_word(cur_word):
+    cur_random = random.random()
+    for option, p in prob[cur_word].iteritems():
+        cur_random -= p
+        if cur_random < 0:
+            return option
 
 if __name__ == '__main__':
     main()
