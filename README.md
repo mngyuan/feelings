@@ -1,1 +1,1 @@
-![demo gif](https://raw.githubusercontent.com/phorust/feelings/gh-pages/demo.gif)
+![demo gif](https://raw.githubusercontent.com/phorust/feelings/master/demo.gif)
