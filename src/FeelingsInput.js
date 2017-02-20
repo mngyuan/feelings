@@ -38,7 +38,14 @@ class FeelingsInput extends Component {
     if (this.props.transitions[lastTypedWord]) {
       // happy birthday
       suggestion = pickWord(getPossibleWords('', this.props.transitions[lastWord]));
-      suggestionText = `${text} ${suggestion}`;
+      if (suggestion === '\n') {
+        suggestion = '\\n';
+        suggestionText = `${text}${suggestion}`;
+      } else if (suggestion === ',' || suggestion === '.' || lastWord === '\n') {
+        suggestionText = `${text}${suggestion}`;
+      } else {
+        suggestionText = `${text} ${suggestion}`;
+      }
     } else {
       // happy birthd
       suggestion = this.props.transitions[lastWord]
@@ -59,8 +66,8 @@ class FeelingsInput extends Component {
   render() {
     return (
       <div className="feelingsInput">
-        <textarea value={this.state.text} type="text" onChange={this.onChange}/>
         <div className="bgText">{this.state.suggestionText}</div>
+        <textarea value={this.state.text} type="text" onChange={this.onChange}/>
       </div>
     );
   }
