@@ -1,24 +1,6 @@
 import React, { Component } from 'react';
+import {MATCH} from './Consts.js';
 import './App.css';
-
-const MATCH = /[\w']+|[.,!?;\-\n]/g;
-
-// function constructPrefixTrie(transitions) {
-//   if (!transitions) { return {}; }
-//   const prefixTrie = {'\0': {}};
-//   for (const key of Object.keys(transitions)) {
-//     const record = (n, s) => {
-//       if (s.length === 0) { return; }
-//       if (!n[s[0]]) {
-//         n[s[0]] = {count: 0};
-//       }
-//       n[s[0]].count += 1;
-//       record(n[s[0]], s.slice(1));
-//     };
-//     record(prefixTrie, key + '$');
-//   }
-//   return prefixTrie;
-// }
 
 class FeelingsInput extends Component {
   constructor(props) {
@@ -26,68 +8,64 @@ class FeelingsInput extends Component {
     super(props);
     this.state = {
       text: '',
-      predictedText: '',
-      // basePrefixTrie: constructPrefixTrie(props.transitions),
+      suggestionText: '',
     };
   }
 
   onChange = (e) => {
-    if (e.target.value) {
-      let [penultimate, lastWord] = e.target.value.match(MATCH).slice(-2);
-      let lastFinishedWord = '\n';
-      let currentUnfinishedWord = lastWord;
-      let possibleWords = [];
-      if (this.props.transitions[lastWord]) {
-        // just finished typing a valid word, last two words are valid
-        lastFinishedWord = lastWord;
-        possibleWords = Object.entries(this.props.transitions[lastFinishedWord])
-          .sort((a,b) => b[1].count - a[1].count)
-          .map(entry => entry[0]);
-      } else if (this.props.transitions[penultimate]) {
-        // still typing a word, but the last one was valid
-        lastFinishedWord = penultimate;
-        currentUnfinishedWord = lastWord || ' ';
-        possibleWords = this.getPossibleWord(currentUnfinishedWord, this.props.transitions[lastFinishedWord]);
-      } else {
-        // still typing a word and the previous one was invalid
-        currentUnfinishedWord = lastWord || penultimate;
-        possibleWords = this.getPossibleWord(currentUnfinishedWord, this.props.transitions);
-      }
-
-      const predictedText = e.target.value.slice(0, -currentUnfinishedWord.length) + possibleWords[0];
-      this.setState({
-        text: e.target.value,
-        predictedText,
-      });
-      console.log('lastFinishedWord', lastFinishedWord, 'currentUnfinishedWord', currentUnfinishedWord, 'possibleWords', possibleWords, 'predictedText', predictedText);
+    const text = e.target.value;
+    const words = text.match(MATCH);
+    const lastTypedWord = words.slice(-1)[0];
+    const lastWord = getLastCompleteWord(text, this.props.transitions);
+    let suggestion = '';
+    let suggestionText = '';
+    if (this.props.transitions[lastTypedWord]) {
+      // happy birthday
+      suggestion = getPossibleWords('', this.props.transitions[lastWord])[0];
+      suggestionText = `${text} ${suggestion}`;
     } else {
-      this.setState({
-        text: e.target.value,
-      });
+      // happy birthd
+      suggestion = getPossibleWords(lastTypedWord, this.props.transitions[lastWord])[0];
+      suggestionText = `${text.slice(0, -lastTypedWord.length)}${suggestion}`;
     }
-  }
-
-  getPossibleWord(s, transitions) {
-    debugger;
-    return Object.entries(transitions)
-      // .filter(entry => s === ' ' || entry[0].indexOf(s) > -1)
-      .filter(entry => s === ' ' || entry[0].startsWith(s))
-      .sort((a,b) => b[1].count - a[1].count)
-      .map(entry => entry[0]);
-  }
-
-  expand(prefixTrie) {
-
+    console.log('lastTypedWord', lastTypedWord, 'lastWord', lastWord, 'suggestion', suggestion, 'suggestionText', suggestionText);
+    this.setState({
+      text,
+      suggestionText,
+    });
   }
 
   render() {
     return (
       <div className="feelingsInput">
         <textarea value={this.state.text} type="text" onChange={this.onChange}/>
-        <div className="bgText">{this.state.predictedText}</div>
+        <div className="bgText">{this.state.suggestionText}</div>
       </div>
     );
   }
 }
 
 export default FeelingsInput;
+
+export function getLastCompleteWord(text, validWords) {
+  const words = text.match(MATCH);
+  if (!words) { return null; }
+  const lastWord = words.slice(-1)[0];
+  const penultimateWord = words.slice(-2)[0];
+  if (validWords[lastWord]) {
+    return lastWord;
+  } else {
+    if (validWords[penultimateWord]) {
+      return penultimateWord;
+    }
+    return null;
+  }
+}
+
+export function getPossibleWords(s, transitions) {
+  return Object.entries(transitions)
+    // .filter(entry => s === ' ' || entry[0].indexOf(s) > -1)
+    .filter(entry => s === ' ' || entry[0].startsWith(s))
+    .sort((a,b) => b[1].count - a[1].count)
+    .map(entry => entry[0]);
+}
